@@ -4,10 +4,12 @@ Cyan='\033[0;36m'
 Default='\033[0;m'
 
 projectName=""
+companyName=""
 httpsRepo=""
 sshRepo=""
 homePage=""
 confirmed="n"
+openOnFinish="n"
 
 getProjectName() {
     read -p "Enter Project Name: " projectName
@@ -15,6 +17,10 @@ getProjectName() {
     if test -z "$projectName"; then
         getProjectName
     fi
+}
+
+getCompanyName(){
+    read -p "Enter Company Name: " companyName
 }
 
 getHTTPSRepo() {
@@ -29,7 +35,7 @@ getSSHRepo() {
     read -p "Enter SSH Repo URL: " sshRepo
 
     if test -z "$sshRepo"; then
-        getSSHRepo
+        sshRepo=$httpsRepo
     fi
 }
 
@@ -37,22 +43,29 @@ getHomePage() {
     read -p "Enter Home Page URL: " homePage
 
     if test -z "$homePage"; then
-        getHomePage
+        homePage="https://github.com/isxq"
     fi
 }
 
 getInfomation() {
     getProjectName
+    getCompanyName
     getHTTPSRepo
     getSSHRepo
     getHomePage
 
     echo -e "\n${Default}================================================"
     echo -e "  Project Name  :  ${Cyan}${projectName}${Default}"
+    echo -e "  Company Name  :  ${Cyan}${companyName}${Default}"
     echo -e "  HTTPS Repo    :  ${Cyan}${httpsRepo}${Default}"
     echo -e "  SSH Repo      :  ${Cyan}${sshRepo}${Default}"
     echo -e "  Home Page URL :  ${Cyan}${homePage}${Default}"
     echo -e "================================================\n"
+    echo -e "                                                 \   ^__^"
+    echo -e "                                                  \  (oo)\_______"
+    echo -e "                                                     (__)\       )\/\/"
+    echo -e "                                                         ||----w |"
+    echo -e "                                                         ||     ||"
 }
 
 echo -e "\n"
@@ -64,30 +77,36 @@ do
     read -p "confirm? (y/n):" confirmed
 done
 
-mkdir -p "../${projectName}/${projectName}/${projectName}"
+if [ -d "../${projectName}" ]; then
+echo "You have created the project."
+else
+echo "Generating your project..."
+cookiecutter https://github.com/isxq/SubpodsTemplate.git app_name="${projectName}" company_name="${companyName}" --no-input -o ../
+ls "../${projectName}"
+fi
+
+if [ $? -eq 0 ]; then
+mkdir -p "../${projectName}/${projectName}/Pods"
 
 licenseFilePath="../${projectName}/FILE_LICENSE"
-gitignoreFilePath="../${projectName}/.gitignore"
 specFilePath="../${projectName}/${projectName}.podspec"
 readmeFilePath="../${projectName}/readme.md"
 uploadFilePath="../${projectName}/upload.sh"
 podfilePath="../${projectName}/Podfile"
 
 echo "copy to $licenseFilePath"
-cp -f ./templates/FILE_LICENSE "$licenseFilePath"
-echo "copy to $gitignoreFilePath"
-cp -f ./templates/gitignore    "$gitignoreFilePath"
+cp -n  ./templates/FILE_LICENSE "$licenseFilePath"
 echo "copy to $specFilePath"
-cp -f ./templates/pod.podspec  "$specFilePath"
+cp -n  ./templates/pod.podspec  "$specFilePath"
 echo "copy to $readmeFilePath"
-cp -f ./templates/readme.md    "$readmeFilePath"
+cp -n  ./templates/readme.md    "$readmeFilePath"
 echo "copy to $uploadFilePath"
-cp -f ./templates/upload.sh    "$uploadFilePath"
+cp -n  ./templates/upload.sh    "$uploadFilePath"
 echo "copy to $podfilePath"
-cp -f ./templates/Podfile      "$podfilePath"
+cp -n ./templates/Podfile      "$podfilePath"
+
 
 echo "editing..."
-sed -i "" "s%__ProjectName__%${projectName}%g" "$gitignoreFilePath"
 sed -i "" "s%__ProjectName__%${projectName}%g" "$readmeFilePath"
 sed -i "" "s%__ProjectName__%${projectName}%g" "$uploadFilePath"
 sed -i "" "s%__ProjectName__%${projectName}%g" "$podfilePath"
@@ -109,4 +128,8 @@ git rm -rf --cached $projectName.xcodeproj/xcuserdata/`whoami`.xcuserdatad/xcsch
 git rm -rf --cached $projectName.xcodeproj/project.xcworkspace/xcuserdata/ &> /dev/null
 echo "clean finished"
 say "finished"
-echo "finished"
+echo "finished!"
+else
+say "failed"
+echo "failed, please retry."
+fi
